@@ -1,4 +1,0 @@
-gymnasium
-stable-baselines3[extra]
-docker
-numpy

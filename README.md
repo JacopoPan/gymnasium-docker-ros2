@@ -1,36 +1,15 @@
 # gymnasium-docker-ros2
 
-A Minimal Working Example (MWE) of a Farama Gymnasium environment
-that wraps a multi-container ROS2 simulation using `docker-py` and
-is trained with `stable-baselines3`.
+```sh
+git clone https://github.com/JacopoPan/gymnasium-docker-ros2.git
+cd gymnasium-docker-ros2/
 
-## Structure
+# Install Anaconda: https://docs.conda.io/projects/conda/en/stable/user-guide/install/linux.html
+conda create -n gdr2 python=3.13 # https://devguide.python.org/versions/
+conda activate gdr2
 
-* `/docker`: Contains `Dockerfile`s for the ROS2 nodes.
-* `/ros_workspace`: The ROS2 nodes that make up the simulation.
-* `/gym_env`: The `RosSimEnv` class (the core wrapper).
-* `train.py`: The `stable-baselines3` training script.
+pip3 install --upgrade pip
+pip3 install -e .
 
-## How to Run
-
-1.  **Install Dependencies:**
-    * You must have **ROS2 (Humble)** installed and sourced on your host.
-    * You must have **Docker** installed and running.
-
-2.  **Install Python packages:**
-    ```bash
-    pip install -r requirements.txt
-    ```
-
-3.  **Build the Docker Images:**
-    ```bash
-    ./build_dockers.sh
-    ```
-
-4.  **Run the Training:**
-    ```bash
-    # Make sure you have sourced your ROS2 environment
-    source /opt/ros/humble/setup.bash
-    
-    python train.py
-    ```
+python3 train.py
+```
