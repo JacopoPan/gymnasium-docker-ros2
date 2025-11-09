@@ -21,6 +21,9 @@ def main():
     except Exception as e:
         print(f"Environment has issues: {e}")
 
+    env.close()
+    exit() # Just testing the environment for now
+
     # Instantiate the agent
     model = PPO("MlpPolicy", env, verbose=1)
 
