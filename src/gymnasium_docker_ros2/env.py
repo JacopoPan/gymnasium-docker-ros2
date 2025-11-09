@@ -1,118 +1,106 @@
-from typing import Optional
 import numpy as np
 import gymnasium as gym
 
-
 class GDR2Env(gym.Env):
+    """
+    A simple 1D dynamical system (point mass).
+    
+    - State: [position, velocity] (2D)
+    - Action: [force] (1D)
+    - Goal: Stay at position 0.0
+    """
+    metadata = {"render_modes": ["human"], "render_fps": 20}
 
-    def __init__(self, size: int = 5):
-        # The size of the square grid (5x5 by default)
-        self.size = size
+    def __init__(self, render_mode=None):
+        super().__init__()
+        
+        self.max_steps = 1000  # Max steps per episode
+        self.dt = 0.05         # Time step
 
-        # Initialize positions - will be set randomly in reset()
-        # Using -1,-1 as "uninitialized" state
-        self._agent_location = np.array([-1, -1], dtype=np.int32)
-        self._target_location = np.array([-1, -1], dtype=np.int32)
+        # Observation Space: [position, velocity]
+        # position is in [-1, 1], velocity is in [-5, 5]
+        self.obs_low = np.array([-1.0, -5.0], dtype=np.float32)
+        self.obs_high = np.array([1.0, 5.0], dtype=np.float32)
+        self.observation_space = gym.spaces.Box(low=self.obs_low, high=self.obs_high, dtype=np.float32)
 
-        # Define what the agent can observe
-        # Dict space gives us structured, human-readable observations
-        self.observation_space = gym.spaces.Dict(
-            {
-                "agent": gym.spaces.Box(0, size - 1, shape=(2,), dtype=int),   # [x, y] coordinates
-                "target": gym.spaces.Box(0, size - 1, shape=(2,), dtype=int),  # [x, y] coordinates
-            }
-        )
+        # Action Space: [force] between -1.0 and 1.0
+        self.action_space = gym.spaces.Box(low=-1.0, high=1.0, shape=(1,), dtype=np.float32)
 
-        # Define what actions are available (4 directions)
-        self.action_space = gym.spaces.Discrete(4)
-
-        # Map action numbers to actual movements on the grid
-        # This makes the code more readable than using raw numbers
-        self._action_to_direction = {
-            0: np.array([1, 0]),   # Move right (positive x)
-            1: np.array([0, 1]),   # Move up (positive y)
-            2: np.array([-1, 0]),  # Move left (negative x)
-            3: np.array([0, -1]),  # Move down (negative y)
-        }
+        # Internal state
+        self.position = 0.0
+        self.velocity = 0.0
+        self.step_count = 0
+        
+        # Rendering
+        self.render_mode = render_mode
 
     def _get_obs(self):
-        """Convert internal state to observation format.
-
-        Returns:
-            dict: Observation with agent and target positions
-        """
-        return {"agent": self._agent_location, "target": self._target_location}
+        return np.array([self.position, self.velocity], dtype=np.float32)
 
     def _get_info(self):
-        """Compute auxiliary information for debugging.
+        return {"position": self.position, "velocity": self.velocity}
 
-        Returns:
-            dict: Info with distance between agent and target
-        """
-        return {
-            "distance": np.linalg.norm(
-                self._agent_location - self._target_location, ord=1
-            )
-        }
+    def reset(self, seed=None, options=None):
+        super().reset(seed=seed)  # Handle seeding
 
-    def reset(self, seed: Optional[int] = None, options: Optional[dict] = None):
-        """Start a new episode.
+        # Reset state to a random position near the center
+        self.position = self.np_random.uniform(low=-0.1, high=0.1)
+        self.velocity = 0.0
+        self.step_count = 0
+        
+        if self.render_mode == "human":
+            self._render_frame()
 
-        Args:
-            seed: Random seed for reproducible episodes
-            options: Additional configuration (unused in this example)
-
-        Returns:
-            tuple: (observation, info) for the initial state
-        """
-        # IMPORTANT: Must call this first to seed the random number generator
-        super().reset(seed=seed)
-
-        # Randomly place the agent anywhere on the grid
-        self._agent_location = self.np_random.integers(0, self.size, size=2, dtype=int)
-
-        # Randomly place target, ensuring it's different from agent position
-        self._target_location = self._agent_location
-        while np.array_equal(self._target_location, self._agent_location):
-            self._target_location = self.np_random.integers(
-                0, self.size, size=2, dtype=int
-            )
-
-        observation = self._get_obs()
-        info = self._get_info()
-
-        return observation, info
+        return self._get_obs(), self._get_info()
 
     def step(self, action):
-        """Execute one timestep within the environment.
+        force = action[0]
+        
+        # Simple Euler integration
+        self.velocity += force * self.dt
+        self.velocity *= 0.99  # Add some damping
+        self.position += self.velocity * self.dt
 
-        Args:
-            action: The action to take (0-3 for directions)
+        # Clip position to the bounds [-1.0, 1.0]
+        self.position = np.clip(self.position, -1.0, 1.0)
+        
+        # If it hits a wall, dampen the velocity (like a bounce)
+        if self.position == -1.0 or self.position == 1.0:
+            self.velocity *= -0.5
 
-        Returns:
-            tuple: (observation, reward, terminated, truncated, info)
-        """
-        # Map the discrete action (0-3) to a movement direction
-        direction = self._action_to_direction[action]
-
-        # Update agent position, ensuring it stays within grid bounds
-        # np.clip prevents the agent from walking off the edge
-        self._agent_location = np.clip(
-            self._agent_location + direction, 0, self.size - 1
-        )
-
-        # Check if agent reached the target
-        terminated = np.array_equal(self._agent_location, self._target_location)
-
-        # We don't use truncation in this simple environment
-        # (could add a step limit here if desired)
-        truncated = False
-
-        # Simple reward structure: +1 for reaching target, 0 otherwise
-        # Alternative: could give small negative rewards for each step to encourage efficiency
-        reward = 1 if terminated else 0
-
-        observation = self._get_obs()
+        self.step_count += 1
+        
+        # Calculate reward: Negative distance from the goal (position 0)
+        reward = -np.abs(self.position)
+        # Check for termination
+        terminated = False  # This is a continuing task, never "terminates"
+        # Check for truncation (episode ends due to time limit)
+        truncated = self.step_count >= self.max_steps
+        # Get obs and info
+        obs = self._get_obs()
         info = self._get_info()
+        
+        # Handle rendering
+        if self.render_mode == "human":
+            self._render_frame()
 
-        return observation, reward, terminated, truncated, info
+        return obs, reward, terminated, truncated, info
+
+    def render(self):
+        if self.render_mode == "human":
+            self._render_frame()
+
+    def _render_frame(self):
+        # Scale position from [-1, 1] to a 40-char width
+        pos_int = int((self.position + 1.0) / 2.0 * 40)     
+        # Create the display string
+        display = ['-'] * 41
+        display[pos_int] = 'O'  # The agent
+        if pos_int != 20:
+            display[20] = '|'       # The target (0.0)   
+        # Print to console
+        print(f"\r{''.join(display)}  Pos: {self.position:6.3f}, Vel: {self.velocity:6.3f}", end="")
+
+    def close(self):
+        if self.render_mode == "human":
+            print()  # Add a newline after the final render
