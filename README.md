@@ -1,8 +1,19 @@
 # gymnasium-docker-ros2
 
+> [!WARNING]
+> This is still work-in-progress
+
+A simple example of how to wrap a multi-container Docker/ROS2 application into [`gymnasium`](https://github.com/Farama-Foundation/Gymnasium) API and train a PPO agent with [`stable-baselines3`](https://github.com/DLR-RM/stable-baselines3)
+
+> [!IMPORTANT]
+> This repo is developed using Ubuntu 22.04 with `nvidia-driver-580` and Docker Engine v28 on an i9-13 with RTX 3500
+
 ```sh
 git clone https://github.com/JacopoPan/gymnasium-docker-ros2.git
 cd gymnasium-docker-ros2/
+
+# Install Docker Engine: https://docs.docker.com/engine/install/ubuntu/ and https://docs.docker.com/engine/install/linux-postinstall/
+docker build -t gdr2-image -f resources/Dockerfile .
 
 # Install Anaconda: https://docs.conda.io/projects/conda/en/stable/user-guide/install/linux.html
 conda create -n gdr2 python=3.13 # https://devguide.python.org/versions/

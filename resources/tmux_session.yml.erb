@@ -1,0 +1,17 @@
+<% 
+  node = ENV.fetch('NODE', 'control')
+%>
+
+name: mwe
+
+windows:
+
+  - debug:
+      layout: even-horizontal
+      panes:
+        - clear && echo "So nice to have you with us, this is an MWE container."
+        <% if node == 'control' %>
+        - ros2 run control control --noise 0.05 --rate 50 --ros-args -p use_sim_time:=True
+        <% elsif node == 'dynamics' %>
+        - ros2 run dynamics dynamics --rate 200 --ros-args -p use_sim_time:=True
+        <% end %>

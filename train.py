@@ -5,6 +5,7 @@ from stable_baselines3 import PPO
 from stable_baselines3.common.env_checker import check_env as sb3_check_env
 from gymnasium_docker_ros2.env import GDR2Env
 
+
 def main():
     # Register the environment so we can create it with gym.make()
     gym.register(
@@ -21,8 +22,8 @@ def main():
     except Exception as e:
         print(f"Environment has issues: {e}")
 
-    env.close()
-    exit() # Just testing the environment for now
+    # env.close()
+    # exit() # Just testing the environment for now
 
     # Instantiate the agent
     model = PPO("MlpPolicy", env, verbose=1)
@@ -43,7 +44,7 @@ def main():
 
     print("\nTesting trained agent...")
     obs, info = env.reset()
-    for _ in range(500): # Run for 500 steps
+    for _ in range(800): # Run for 800 steps
         action, _states = model.predict(obs, deterministic=True)
         obs, reward, terminated, truncated, info = env.step(action)
         

@@ -2,6 +2,7 @@ import numpy as np
 import gymnasium as gym
 import docker
 
+
 class GDR2Env(gym.Env):
     """
     A simple 1D dynamical system (point mass).
@@ -35,55 +36,41 @@ class GDR2Env(gym.Env):
         # Rendering
         self.render_mode = render_mode
 
-        # --- Docker Setup Parameters ---
-        self.NETWORK_NAME = "gdr2_rl_net"
-        self.SIM_IMAGE = "ubuntu:latest"     # Placeholder image
-        self.GND_IMAGE = "ubuntu:latest"     # Placeholder image
-        self.SIM_CONTAINER_NAME = "gdr2-sim-container"
-        self.GND_CONTAINER_NAME = "gdr2-gnd-container"
-
-        # Initialize Docker Client
+        # Docker setup
+        self.NETWORK_NAME = "gdr2-network"
         try:
             self.client = docker.from_env()
         except Exception as e:
             raise RuntimeError("Could not connect to the Docker daemon. Ensure Docker is running.") from e
-
-        # --- Docker Network Creation (Ensuring Clean Start) ---
         print(f"Setting up Docker Network: {self.NETWORK_NAME}...")
         try:
-            # Check if network exists and remove it to ensure clean configuration
             existing_network = self.client.networks.get(self.NETWORK_NAME)
             existing_network.remove()
             print(f"Existing network '{self.NETWORK_NAME}' removed.")
         except docker.errors.NotFound:
-            # Network doesn't exist, proceed to create it
             pass
-        
         self.network = self.client.networks.create(self.NETWORK_NAME, driver="bridge")
-
-        # --- Start Container 1 (Simulation) ---
-        print(f"Starting Simulation Container: {self.SIM_CONTAINER_NAME}...")
-        self.sim_container = self.client.containers.run(
-            self.SIM_IMAGE,
-            command="sleep infinity",
-            name=self.SIM_CONTAINER_NAME,
+        self.control_container = self.client.containers.run(
+            "gdr2-image:latest",
+            name="control-container",
             network=self.NETWORK_NAME,
-            detach=True,
-            remove=True # Automatically remove when stopped
+            tty=True, detach=True, remove=True,
+            environment={
+                "ROS_DOMAIN_ID": "42",
+                "NODE": "control",
+            }
         )
-
-        # --- Start Container 2 (Ground Station) ---
-        print(f"Starting Ground Container: {self.GND_CONTAINER_NAME}...")
-        self.gnd_container = self.client.containers.run(
-            self.GND_IMAGE,
-            command="sleep infinity",
-            name=self.GND_CONTAINER_NAME,
+        self.dynamics_container = self.client.containers.run(
+            "gdr2-image:latest",
+            name="dynamics-container",
             network=self.NETWORK_NAME,
-            detach=True,
-            remove=True
+            tty=True, detach=True, remove=True,
+            environment={
+                "ROS_DOMAIN_ID": "42",
+                "NODE": "dynamics",
+            }
         )
         print("Docker setup complete. Containers are running.")
-        ####
 
     def _get_obs(self):
         return np.array([self.position, self.velocity], dtype=np.float32)
@@ -122,7 +109,7 @@ class GDR2Env(gym.Env):
         self.step_count += 1
         
         # Calculate reward: Negative distance from the goal (position 0)
-        reward = -np.abs(self.position)
+        reward = float(-np.abs(self.position))
         # Check for termination
         terminated = False  # This is a continuing task, never "terminates"
         # Check for truncation (episode ends due to time limit)
@@ -156,25 +143,19 @@ class GDR2Env(gym.Env):
         if self.render_mode == "human":
             print()  # Add a newline after the final render
         
-        # 1. Stop containers (remove=True handles removal after stop)
+        # Docker clean-up (remove=True handles removal after stop)
         try:
-            self.sim_container.stop()
-            print(f"Container {self.SIM_CONTAINER_NAME} stopped.")
-        except Exception:
-            # Catch exceptions if the container was already stopped or not found
-            pass
-        
-        try:
-            self.gnd_container.stop()
-            print(f"Container {self.GND_CONTAINER_NAME} stopped.")
+            self.control_container.stop()
+            print(f"Control container stopped.")
         except Exception:
             pass
-
-        # 2. Remove the network
-        print(f"Removing Docker Network: {self.NETWORK_NAME}...")
+        try:
+            self.dynamics_container.stop()
+            print(f"Dynamics container stopped.")
+        except Exception:
+            pass
         try:
             self.network.remove()
             print(f"Network {self.NETWORK_NAME} removed.")
         except Exception:
-            # Catch exceptions if the network was already removed
             pass
