@@ -149,7 +149,7 @@ class GDR2Env(gym.Env):
             pos_str, vel_str, sec_str, nanosec_str = reply_bytes.decode('utf-8').split(',')
             # self.position = float(pos_str)
             # self.velocity = float(vel_str)
-            print(f"Received state: Pos={pos_str}, Vel={vel_str} at time {sec_str}.{nanosec_str}")
+            # print(f"Received state: Pos={pos_str}, Vel={vel_str} at time {sec_str}.{nanosec_str}")
         except zmq.error.Again:
             print("ZMQ Error: Reply from container timed out. Resetting state.")
         except ValueError:

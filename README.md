@@ -38,7 +38,7 @@ docker exec -it dynamics-container tmux attach
 
 docker stop $(docker ps -q) && docker container prune
 
-- zeromq interaction
+- compute stepping performance
 - locked time steping
 
 - Install ROS2 system-wide (?)

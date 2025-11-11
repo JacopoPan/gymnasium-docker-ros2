@@ -48,7 +48,7 @@ class ZMQBridge(Node):
         poller.register(self.socket, zmq.POLLIN)
         
         while rclpy.ok():
-            socks = dict(poller.poll(100)) # Wait for a request with a 100ms timeout
+            socks = dict(poller.poll(10)) # Wait for a request with a 10ms timeout
             
             if self.socket in socks and socks[self.socket] == zmq.POLLIN:
                 try:
