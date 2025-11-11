@@ -109,7 +109,8 @@ class GDR2Env(gym.Env):
         self.ZMQ_PORT = 5555
         self.ZMQ_IP = DYNAMICS_IP
         self.zmq_context = zmq.Context()
-        self.socket = self.zmq_context.socket(zmq.PUSH)
+        self.socket = self.zmq_context.socket(zmq.REQ)
+        self.socket.setsockopt(zmq.RCVTIMEO, 5 * 1000) # 1000 ms = 1 seconds
         self.socket.connect(f"tcp://{self.ZMQ_IP}:{self.ZMQ_PORT}")
         print(f"ZeroMQ socket connected to {self.ZMQ_IP}:{self.ZMQ_PORT}")
 
@@ -138,13 +139,21 @@ class GDR2Env(gym.Env):
         ###########################################################################################
         ###########################################################################################
         ###########################################################################################
-        # 1. ACTION: Serialize the action and send via PUSH
-        # print(f"\rSending action: {force:.4f}...", end="")
-        action_payload = f"{force}".encode('utf-8')
-        
-        # PUSH is non-blocking, it sends the message and returns immediately.
-        self.socket.send(action_payload)
-        # print(" Sent.")
+        try:
+            # Serialize the action and send the REQ
+            action_payload = f"{force}".encode('utf-8')
+            self.socket.send(action_payload)    
+            # Wait for the REP (synchronous block) this call will block until a reply is received or it times out
+            reply_bytes = self.socket.recv()
+            # Deserialize
+            pos_str, vel_str, sec_str, nanosec_str = reply_bytes.decode('utf-8').split(',')
+            # self.position = float(pos_str)
+            # self.velocity = float(vel_str)
+            print(f"Received state: Pos={pos_str}, Vel={vel_str} at time {sec_str}.{nanosec_str}")
+        except zmq.error.Again:
+            print("ZMQ Error: Reply from container timed out. Resetting state.")
+        except ValueError:
+            print("ZMQ Error: Reply format error. Received garbage state.")
         ###########################################################################################
         ###########################################################################################
         ###########################################################################################
@@ -217,6 +226,6 @@ class GDR2Env(gym.Env):
 
         # Close ZMQ resources
         if self.socket:
-            self.socket.close()
+            self.socket.close(linger=0)
         if self.zmq_context:
             self.zmq_context.term()

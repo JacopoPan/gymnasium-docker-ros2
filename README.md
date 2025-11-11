@@ -30,15 +30,14 @@ python3 train.py
 ## TODOS
 
 Test containers with:
-docker run -it --rm --env NODE=simulation gdr2-image
-docker run -it --rm --env NODE=dynamics gdr2-image
+docker run -it --rm --env TMUX_OPTS=simulation gdr2-image
+docker run -it --rm --env TMUX_OPTS=dynamics gdr2-image
 
 docker exec -it simulation-container tmux attach
 docker exec -it dynamics-container tmux attach
 
 docker stop $(docker ps -q) && docker container prune
 
-- add gz and gz clock
 - zeromq interaction
 - locked time steping
 
