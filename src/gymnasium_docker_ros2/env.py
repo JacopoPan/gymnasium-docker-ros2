@@ -1,6 +1,10 @@
 import numpy as np
 import gymnasium as gym
 import docker
+import zmq
+import time
+
+from docker.types import NetworkingConfig, EndpointConfig
 
 
 class GDR2Env(gym.Env):
@@ -49,28 +53,65 @@ class GDR2Env(gym.Env):
             print(f"Existing network '{self.NETWORK_NAME}' removed.")
         except docker.errors.NotFound:
             pass
-        self.network = self.client.networks.create(self.NETWORK_NAME, driver="bridge")
-        self.control_container = self.client.containers.run(
+        ipam_pool = docker.types.IPAMPool(
+            subnet='10.42.0.0/16',
+            gateway='10.42.0.1'
+        )
+        ipam_config=docker.types.IPAMConfig(
+            pool_configs=[ipam_pool]
+        )
+        self.network = self.client.networks.create(
+            self.NETWORK_NAME, 
+            driver="bridge",
+            ipam=ipam_config
+        )
+        SIMULATION_IP = "10.42.0.20"
+        DYNAMICS_IP = "10.42.0.30"
+        print("Creating simulation-container...")
+        self.simulation_container = self.client.containers.create(
             "gdr2-image:latest",
-            name="control-container",
-            network=self.NETWORK_NAME,
-            tty=True, detach=True, remove=True,
+            name="simulation-container",
+            tty=True,
+            detach=True,
+            auto_remove=True, # Note: 'remove=True' becomes 'auto_remove=True'
             environment={
                 "ROS_DOMAIN_ID": "42",
-                "NODE": "control",
+                "TMUX_OPTS": "simulation",
             }
         )
-        self.dynamics_container = self.client.containers.run(
+        print(f"Connecting simulation-container to {self.NETWORK_NAME} with IP {SIMULATION_IP}...")
+        self.network.connect(
+            self.simulation_container,
+            ipv4_address=SIMULATION_IP
+        )
+        self.simulation_container.start()
+        print("Creating dynamics-container...")
+        self.dynamics_container = self.client.containers.create(
             "gdr2-image:latest",
             name="dynamics-container",
-            network=self.NETWORK_NAME,
-            tty=True, detach=True, remove=True,
+            tty=True,
+            detach=True,
+            auto_remove=True, # Note: 'remove=True' becomes 'auto_remove=True'
             environment={
                 "ROS_DOMAIN_ID": "42",
-                "NODE": "dynamics",
+                "TMUX_OPTS": "dynamics",
             }
         )
+        print(f"Connecting dynamics-container to {self.NETWORK_NAME} with IP {DYNAMICS_IP}...")
+        self.network.connect(
+            self.dynamics_container,
+            ipv4_address=DYNAMICS_IP
+        )
+        self.dynamics_container.start()
         print("Docker setup complete. Containers are running.")
+
+        # ZeroMQ Setup
+        self.ZMQ_PORT = 5555
+        self.ZMQ_IP = DYNAMICS_IP
+        self.zmq_context = zmq.Context()
+        self.socket = self.zmq_context.socket(zmq.PUSH)
+        self.socket.connect(f"tcp://{self.ZMQ_IP}:{self.ZMQ_PORT}")
+        print(f"ZeroMQ socket connected to {self.ZMQ_IP}:{self.ZMQ_PORT}")
 
     def _get_obs(self):
         return np.array([self.position, self.velocity], dtype=np.float32)
@@ -93,6 +134,20 @@ class GDR2Env(gym.Env):
 
     def step(self, action):
         force = action[0]
+
+        ###########################################################################################
+        ###########################################################################################
+        ###########################################################################################
+        # 1. ACTION: Serialize the action and send via PUSH
+        # print(f"\rSending action: {force:.4f}...", end="")
+        action_payload = f"{force}".encode('utf-8')
+        
+        # PUSH is non-blocking, it sends the message and returns immediately.
+        self.socket.send(action_payload)
+        # print(" Sent.")
+        ###########################################################################################
+        ###########################################################################################
+        ###########################################################################################
         
         # Simple Euler integration
         self.velocity += force * self.dt
@@ -145,8 +200,8 @@ class GDR2Env(gym.Env):
         
         # Docker clean-up (remove=True handles removal after stop)
         try:
-            self.control_container.stop()
-            print(f"Control container stopped.")
+            self.simulation_container.stop()
+            print(f"Simulation container stopped.")
         except Exception:
             pass
         try:
@@ -159,3 +214,9 @@ class GDR2Env(gym.Env):
             print(f"Network {self.NETWORK_NAME} removed.")
         except Exception:
             pass
+
+        # Close ZMQ resources
+        if self.socket:
+            self.socket.close()
+        if self.zmq_context:
+            self.zmq_context.term()

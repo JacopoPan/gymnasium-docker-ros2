@@ -65,6 +65,14 @@ RUN apt update \
     && rm -rf /var/lib/apt/lists/*
 # Run with $ gz sim
 
+# Install ZeroMQ
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends libzmq3-dev \
+    && apt clean \
+    && rm -rf /var/lib/apt/lists/*
+RUN pip3 install --no-cache-dir --upgrade pip \
+    && pip3 install --no-cache-dir --resume-retries 5 pyzmq
+
 # Copy resources and configuration files from this repository
 FROM gdr2-base-image AS gdr2-dev-image
 
@@ -80,7 +88,10 @@ RUN bash -c "source /opt/ros/humble/setup.bash && colcon build --symlink-install
 RUN echo "source /gdr2/ros2_ws/install/setup.bash" >> /root/.bashrc
 # If needed (but already in .bashrc) $ source /opt/ros/humble/setup.bash && source /gdr2/ros2_ws/install/setup.bash
 
+# Copy resources
+COPY resources/zeromq_bridge.py /gdr2/zeromq_bridge.py
+COPY resources/tmux_session.yml.erb /gdr2/tmux_session.yml.erb
+
 # Final config
 WORKDIR /gdr2
-COPY resources/tmux_session.yml.erb /gdr2/tmux_session.yml.erb
 ENTRYPOINT ["tmuxinator", "start", "-p", "/gdr2/tmux_session.yml.erb"]

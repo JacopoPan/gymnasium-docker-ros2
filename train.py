@@ -14,6 +14,20 @@ def main():
     )
     env = gym.make("GDR2Env-v0", render_mode="human")
 
+    # Manual spinning of the env to see if everything is working
+    # obs, info = env.reset()
+    # print(f"Reset result -- Obs: {obs}, Info: {info}")
+    # for i in range(5):
+    #     rnd_action = env.action_space.sample()
+    #     print(f"\nTaking step {i} with action: {rnd_action}")
+    #     obs, reward, terminated, truncated, info = env.step(rnd_action)
+    #     print(f"Step {i} result -- Obs: {obs}, Reward: {reward}, Terminated: {terminated}, Truncated: {truncated}, Info: {info}")
+    #     if i % 1 == 0:
+    #         input("Press Enter to continue...")
+    # print("\nInitial test steps complete. Closing environment.")
+    # env.close()
+    # exit()
+
     try:
         # check_env(env) # Throws warning
         # check_env(env.unwrapped)
@@ -22,15 +36,12 @@ def main():
     except Exception as e:
         print(f"Environment has issues: {e}")
 
-    # env.close()
-    # exit() # Just testing the environment for now
-
     # Instantiate the agent
     model = PPO("MlpPolicy", env, verbose=1)
 
     # Train the agent
     print("Training agent...")
-    model.learn(total_timesteps=30000)
+    model.learn(total_timesteps=25000)
     print("Training complete.")
 
     # Save the agent

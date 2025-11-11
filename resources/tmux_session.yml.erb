@@ -1,5 +1,5 @@
 <% 
-  node = ENV.fetch('NODE', 'control')
+  tmux_opts = ENV.fetch('TMUX_OPTS', 'simulation')
 %>
 
 name: mwe
@@ -10,8 +10,11 @@ windows:
       layout: even-horizontal
       panes:
         - clear && echo "So nice to have you with us, this is an MWE container."
-        <% if node == 'control' %>
-        - ros2 run control control --noise 0.05 --rate 50 --ros-args -p use_sim_time:=True
-        <% elsif node == 'dynamics' %>
-        - ros2 run dynamics dynamics --rate 200 --ros-args -p use_sim_time:=True
+        <% if tmux_opts == 'simulation' %>
+        - gz sim -v4 -r -s default.sdf
+        - ros2 run ros_gz_bridge parameter_bridge /clock@rosgraph_msgs/msg/Clock[gz.msgs.Clock
+        <% elsif tmux_opts == 'dynamics' %>
+        - ros2 run dynamics dynamics --rate 20 --ros-args -p use_sim_time:=True
+        - python3 /gdr2/zeromq_bridge.py
+        - ros2 topic echo /control_input
         <% end %>

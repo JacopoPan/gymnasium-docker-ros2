@@ -16,6 +16,7 @@ gymnasium = "^1.2"
 tqdm = "^4.67"
 stable-baselines3 = "^2.7.0"
 docker = "^7.1"
+pyzmq = "^27.1"
 
 [tool.poetry.dev-dependencies]
 

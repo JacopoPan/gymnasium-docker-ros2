@@ -1,9 +1,11 @@
 import rclpy
 from rclpy.node import Node
 import argparse
+import numpy as np
 
 from std_msgs.msg import Float64 
-from geometry_msgs.msg import Vector3
+from geometry_msgs.msg import Vector3Stamped 
+from std_msgs.msg import Header
 
 class DynamicsNode(Node):
     def __init__(self, rate):
@@ -16,11 +18,11 @@ class DynamicsNode(Node):
         self.velocity = 0.0
         self.control_input = 0.0
 
-        self.publisher = self.create_publisher(Vector3, '/state', 10)
+        self.publisher = self.create_publisher(Vector3Stamped, '/state', 10)
 
         self.subscriber = self.create_subscription(
             Float64,
-            '/noisy_control',
+            '/control_input',
             self.control_input_callback, 
             10
         )
@@ -45,12 +47,14 @@ class DynamicsNode(Node):
             self.velocity *= -0.5
             
         # Publish the state
-        state_msg = Vector3()        
-        state_msg.x = self.position
-        state_msg.y = self.velocity
-        state_msg.z = 0.0  # Unused
+        state_msg = Vector3Stamped()
+        state_msg.header = Header()
+        state_msg.header.stamp = self.get_clock().now().to_msg() 
+        state_msg.vector.x = self.position
+        state_msg.vector.y = self.velocity
+        state_msg.vector.z = 0.0  # Unused
         self.publisher.publish(state_msg)
-        self.get_logger().debug(f"Published state (Pos/Vel): {self.position:.4f}, {self.velocity:.4f}")
+        self.get_logger().debug(f"Published state (Pos/Vel): {self.position:.4f}, {self.velocity:.4f} at time: {state_msg.header.stamp.sec}.{state_msg.header.stamp.nanosec}")
 
 def main(args=None):
     parser = argparse.ArgumentParser(description='Dynamics Node')
