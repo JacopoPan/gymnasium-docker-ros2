@@ -3,6 +3,7 @@ import gymnasium as gym
 import docker
 import zmq
 import time
+import struct
 
 from docker.types import NetworkingConfig, EndpointConfig
 
@@ -73,7 +74,7 @@ class GDR2Env(gym.Env):
             name="simulation-container",
             tty=True,
             detach=True,
-            auto_remove=True, # Note: 'remove=True' becomes 'auto_remove=True'
+            auto_remove=True,
             environment={
                 "ROS_DOMAIN_ID": "42",
                 "TMUX_OPTS": "simulation",
@@ -91,7 +92,7 @@ class GDR2Env(gym.Env):
             name="dynamics-container",
             tty=True,
             detach=True,
-            auto_remove=True, # Note: 'remove=True' becomes 'auto_remove=True'
+            auto_remove=True,
             environment={
                 "ROS_DOMAIN_ID": "42",
                 "TMUX_OPTS": "dynamics",
@@ -110,7 +111,7 @@ class GDR2Env(gym.Env):
         self.ZMQ_IP = DYNAMICS_IP
         self.zmq_context = zmq.Context()
         self.socket = self.zmq_context.socket(zmq.REQ)
-        self.socket.setsockopt(zmq.RCVTIMEO, 5 * 1000) # 1000 ms = 1 seconds
+        self.socket.setsockopt(zmq.RCVTIMEO, 10 * 1000) # 1000 ms = 1 seconds
         self.socket.connect(f"tcp://{self.ZMQ_IP}:{self.ZMQ_PORT}")
         print(f"ZeroMQ socket connected to {self.ZMQ_IP}:{self.ZMQ_PORT}")
 
@@ -137,7 +138,7 @@ class GDR2Env(gym.Env):
         force = action[0]
 
         ###########################################################################################
-        ###########################################################################################
+        # ZeroMQ REQ/REP to the ROS2 sim ##########################################################
         ###########################################################################################
         try:
             # Serialize the action and send the REQ
@@ -146,29 +147,29 @@ class GDR2Env(gym.Env):
             # Wait for the REP (synchronous block) this call will block until a reply is received or it times out
             reply_bytes = self.socket.recv()
             # Deserialize
-            pos_str, vel_str, sec_str, nanosec_str = reply_bytes.decode('utf-8').split(',')
-            # self.position = float(pos_str)
-            # self.velocity = float(vel_str)
-            # print(f"Received state: Pos={pos_str}, Vel={vel_str} at time {sec_str}.{nanosec_str}")
+            unpacked = struct.unpack('ffii', reply_bytes)
+            pos, vel, sec, nanosec = unpacked
+            # print(f"Received state: Pos={pos}, Vel={vel} at time {sec}.{nanosec}")
+            self.position = pos
+            self.velocity = vel
         except zmq.error.Again:
             print("ZMQ Error: Reply from container timed out. Resetting state.")
         except ValueError:
             print("ZMQ Error: Reply format error. Received garbage state.")
         ###########################################################################################
+        # Simple Euler integration ################################################################
+        ###########################################################################################
+        # self.velocity += force * self.dt
+        # self.velocity *= 0.99  # Add some damping
+        # self.position += self.velocity * self.dt
+        # # Clip position to the bounds [-1.0, 1.0]
+        # self.position = np.clip(self.position, -1.0, 1.0)
+        # # If it hits a wall, dampen the velocity (like a bounce)
+        # if self.position == -1.0 or self.position == 1.0:
+        #     self.velocity *= -0.5
         ###########################################################################################
         ###########################################################################################
-        
-        # Simple Euler integration
-        self.velocity += force * self.dt
-        self.velocity *= 0.99  # Add some damping
-        self.position += self.velocity * self.dt
-
-        # Clip position to the bounds [-1.0, 1.0]
-        self.position = np.clip(self.position, -1.0, 1.0)
-        
-        # If it hits a wall, dampen the velocity (like a bounce)
-        if self.position == -1.0 or self.position == 1.0:
-            self.velocity *= -0.5
+        ###########################################################################################
 
         self.step_count += 1
         

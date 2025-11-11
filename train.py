@@ -1,12 +1,20 @@
 import numpy as np
 import gymnasium as gym
+import argparse
+import time
+
 from gymnasium.utils.env_checker import check_env
 from stable_baselines3 import PPO
 from stable_baselines3.common.env_checker import check_env as sb3_check_env
+
 from gymnasium_docker_ros2.env import GDR2Env
 
 
 def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--mode", type=str, default="train", choices=["step", "speed", "learn"])
+    args = parser.parse_args()
+
     # Register the environment so we can create it with gym.make()
     gym.register(
         id="GDR2Env-v0",
@@ -14,57 +22,75 @@ def main():
     )
     env = gym.make("GDR2Env-v0", render_mode="human")
 
-    # Manual spinning of the env to see if everything is working
-    # obs, info = env.reset()
-    # print(f"Reset result -- Obs: {obs}, Info: {info}")
-    # for i in range(5):
-    #     if i % 1 == 0:
-    #         input("Press Enter to continue...")
-    #     rnd_action = env.action_space.sample()
-    #     print(f"\nTaking step {i} with action: {rnd_action}")
-    #     obs, reward, terminated, truncated, info = env.step(rnd_action)
-    #     print(f"Step {i} result -- Obs: {obs}, Reward: {reward}, Terminated: {terminated}, Truncated: {truncated}, Info: {info}")
-    # print("\nInitial test steps complete. Closing environment.")
-    # env.close()
-    # exit()
+    if args.mode == "step":
+        obs, info = env.reset()
+        print(f"Reset result -- Obs: {obs}, Info: {info}")
+        for i in range(5):
+            if i % 1 == 0:
+                input("Press Enter to continue...")
+            rnd_action = env.action_space.sample()
+            print(f"\nTaking step {i} with action: {rnd_action}")
+            obs, reward, terminated, truncated, info = env.step(rnd_action)
+            print(f"Step {i} result -- Obs: {obs}, Reward: {reward}, Terminated: {terminated}, Truncated: {truncated}, Info: {info}")
+        print("\nInitial test steps complete. Closing environment.")
+        env.close()
 
-    try:
-        # check_env(env) # Throws warning
-        # check_env(env.unwrapped)
-        sb3_check_env(env) # Reward not a float (?)
-        print("Environment passes all checks!")
-    except Exception as e:
-        print(f"Environment has issues: {e}")
+    elif args.mode == "speed":
+        STEPS = 10000
+        print(f"Starting Speed Test ({STEPS} steps)")    
+        obs, info = env.reset()
+        start_time = time.time()        
+        for _ in range(STEPS):
+            action = env.action_space.sample()            
+            obs, reward, terminated, truncated, info = env.step(action)
+            if terminated or truncated:
+                obs, info = env.reset()
+        total_time = time.time() - start_time 
+        print(f"Average Step Time: {(total_time / STEPS) * 1000:.3f} ms")
+        print(f"Throughput: {(STEPS / total_time):.2f} steps/second")
+        print(f"Time for 1,000,000 steps: {(total_time * (1000000/STEPS)):.2f} seconds")
+        env.close()
 
-    # Instantiate the agent
-    model = PPO("MlpPolicy", env, verbose=1)
+    elif args.mode == "learn":
+        try:
+            # check_env(env) # Throws warning
+            # check_env(env.unwrapped)
+            sb3_check_env(env)
+            print("Environment passes all checks!")
+        except Exception as e:
+            print(f"Environment has issues: {e}")
 
-    # Train the agent
-    print("Training agent...")
-    model.learn(total_timesteps=20000)
-    print("Training complete.")
+        # Instantiate the agent
+        model = PPO("MlpPolicy", env, verbose=1)
 
-    # Save the agent
-    model_path = "ppo_agent.zip"
-    model.save(model_path)
-    print(f"Model saved to {model_path}")
+        # Train the agent
+        print("Training agent...")
+        model.learn(total_timesteps=20000)
+        print("Training complete.")
 
-    # Load and test the trained agent
-    del model # remove to demonstrate loading
-    model = PPO.load(model_path)
+        # Save the agent
+        model_path = "ppo_agent.zip"
+        model.save(model_path)
+        print(f"Model saved to {model_path}")
 
-    print("\nTesting trained agent...")
-    obs, info = env.reset()
-    for _ in range(800): # Run for 800 steps
-        action, _states = model.predict(obs, deterministic=True)
-        obs, reward, terminated, truncated, info = env.step(action)
+        # Load and test the trained agent
+        del model # remove to demonstrate loading
+        model = PPO.load(model_path)
+
+        print("\nTesting trained agent...")
+        obs, info = env.reset()
+        for _ in range(800): # Run for 800 steps
+            action, _states = model.predict(obs, deterministic=True)
+            obs, reward, terminated, truncated, info = env.step(action)
+            
+            if terminated or truncated:
+                print("Episode finished. Resetting.")
+                obs, info = env.reset()
         
-        if terminated or truncated:
-            print("Episode finished. Resetting.")
-            obs, info = env.reset()
-    
-    env.close()
-    print("Test complete.")
+        env.close()
+
+    else:
+        print(f"Unknown mode: {args.mode}")
 
 if __name__ == '__main__':
     main()

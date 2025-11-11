@@ -5,6 +5,7 @@ from geometry_msgs.msg import Vector3Stamped
 import zmq
 import threading
 import time
+import struct
 
 ZMQ_PORT = 5555
 
@@ -28,6 +29,7 @@ class ZMQBridge(Node):
         )
         self.latest_state = None
         self.state_lock = threading.Lock() # Use a threading.Lock for safe access to self.latest_state
+        self.state_event = threading.Event()
         
         # Start thread to handle ZMQ requests
         self.zmq_thread = threading.Thread(target=self.zmq_listener, daemon=True)
@@ -42,13 +44,14 @@ class ZMQBridge(Node):
                 msg.header.stamp.sec,
                 msg.header.stamp.nanosec
             )
+        self.state_event.set() # SIGNAL the zmq_listener thread
 
     def zmq_listener(self):        
         poller = zmq.Poller()
         poller.register(self.socket, zmq.POLLIN)
         
         while rclpy.ok():
-            socks = dict(poller.poll(10)) # Wait for a request with a 10ms timeout
+            socks = dict(poller.poll(None)) # Wait for a request
             
             if self.socket in socks and socks[self.socket] == zmq.POLLIN:
                 try:
@@ -57,26 +60,18 @@ class ZMQBridge(Node):
                     force = float(action_bytes.decode('utf-8'))
                     self.get_logger().info(f"Received action: {force:.4f}")
 
-                    # CRITICAL: Synchronization
                     # Clear old state and publish new action
                     with self.state_lock:
                         self.latest_state = None
                     action_msg = Float64(data=force)
                     self.action_publisher.publish(action_msg)
                     # Wait for the new state to arrive from the /state topic
-                    timeout_start = time.time()
-                    new_state_received = False
-                    while not new_state_received and (time.time() - timeout_start) < 2.0:
-                        with self.state_lock:
-                            if self.latest_state is not None:
-                                new_state_received = True
-                        if not new_state_received:
-                            time.sleep(0.001) # Yield thread
-
+                    self.state_event.clear()
+                    new_state_received = self.state_event.wait(timeout=2.0)
                     # Return the state (REP)
                     if new_state_received:
                         pos, vel, sec, nanosec = self.latest_state
-                        reply_payload = f"{pos},{vel},{sec},{nanosec}".encode('utf-8')
+                        reply_payload = struct.pack('ffii', pos, vel, sec, nanosec)
                     else:
                         self.get_logger().warn("State timeout! Replying with 0 state.")
                         reply_payload = b"0.0,0.0,0,0" # Fail safe
@@ -88,7 +83,7 @@ class ZMQBridge(Node):
                 except Exception as e:
                     self.get_logger().error(f"Bridge critical error: {e}")
                     self.socket.send(b"ERROR") 
-                
+
 def main(args=None):
     rclpy.init(args=args)
     node = ZMQBridge()

@@ -1,9 +1,6 @@
 # gymnasium-docker-ros2
 
-> [!WARNING]
-> This is still work-in-progress
-
-A simple example of how to wrap a multi-container Docker/ROS2 application into [`gymnasium`](https://github.com/Farama-Foundation/Gymnasium) API and train a PPO agent with [`stable-baselines3`](https://github.com/DLR-RM/stable-baselines3)
+A simple example of how to wrap a multi-container Docker/Gazebo/ROS2 application into [`gymnasium`](https://github.com/Farama-Foundation/Gymnasium) API and train a PPO agent with [`stable-baselines3`](https://github.com/DLR-RM/stable-baselines3) using [`pyzmq`](https://github.com/zeromq/pyzmq)
 
 > [!IMPORTANT]
 > This repo is developed using Ubuntu 22.04 with `nvidia-driver-580` on an i9-13 with RTX 3500
@@ -22,7 +19,9 @@ conda activate gdr2
 pip3 install --upgrade pip
 pip3 install -e .
 
-python3 train.py
+python3 train.py --mode step
+python3 train.py --mode speed
+python3 train.py --mode learn
 ```
 
 <!--
@@ -36,12 +35,8 @@ docker run -it --rm --env TMUX_OPTS=dynamics gdr2-image
 docker exec -it simulation-container tmux attach
 docker exec -it dynamics-container tmux attach
 
-docker stop $(docker ps -q) && docker container prune
+docker stop $(docker ps -q) && docker container prune -f
 
-- compute stepping performance
 - locked time steping
-
-- Install ROS2 system-wide (?)
-sudo apt install ros-humble-rclpy ros-humble-std-msgs ros-humble-geometry-msgs
 
 >
