@@ -9,12 +9,12 @@ windows:
   - debug:
       layout: even-horizontal
       panes:
-        - clear && echo "So nice to have you with us, this is an MWE container."
+        - ros2 topic echo /clock
         <% if tmux_opts == 'simulation' %>
-        - gz sim -v4 -r -s default.sdf
+        - gz sim -v4 -s default.sdf
         - ros2 run ros_gz_bridge parameter_bridge /clock@rosgraph_msgs/msg/Clock[gz.msgs.Clock
-        <% elsif tmux_opts == 'dynamics' %>
-        - ros2 run dynamics dynamics --rate 5000 --ros-args -p use_sim_time:=True
         - python3 /gdr2/zeromq_bridge.py
+        <% elsif tmux_opts == 'dynamics' %>
+        - ros2 run dynamics dynamics --rate 1000 --ros-args -p use_sim_time:=True
         - ros2 topic echo /control_input
         <% end %>

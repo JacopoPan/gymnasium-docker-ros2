@@ -14,7 +14,8 @@ class DynamicsNode(Node):
         self.rate = rate
         self.dt = 1.0 / self.rate
 
-        self.position = 0.0
+        # self.position = 0.0
+        self.position = np.random.uniform(low=-0.1, high=0.1)
         self.velocity = 0.0
         self.control_input = 0.0
 
@@ -58,7 +59,7 @@ class DynamicsNode(Node):
 
 def main(args=None):
     parser = argparse.ArgumentParser(description='Dynamics Node')
-    parser.add_argument('--rate', type=int, default=50, help='Control frequency.')
+    parser.add_argument('--rate', type=int, default=50, help='Update frequency.')
     
     cli_args, ros_args = parser.parse_known_args()
 

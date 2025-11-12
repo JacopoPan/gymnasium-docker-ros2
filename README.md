@@ -19,14 +19,12 @@ conda activate gdr2
 pip3 install --upgrade pip
 pip3 install -e .
 
-python3 train.py --mode step
-python3 train.py --mode speed
-python3 train.py --mode learn
+python3 train.py --mode step # Manually step the simulation
+python3 train.py --mode speed # Check the simulation throughput
+python3 train.py --mode learn # Train and test a PPO agent
 ```
 
 <!--
-
-## TODOS
 
 Test containers with:
 docker run -it --rm --env TMUX_OPTS=simulation gdr2-image
@@ -37,6 +35,8 @@ docker exec -it dynamics-container tmux attach
 
 docker stop $(docker ps -q) && docker container prune -f
 
-- locked time steping
+## TODOS
+
+ROS2 dynamics should be re-set by the gymnasium environment
 
 >

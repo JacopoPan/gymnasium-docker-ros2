@@ -108,7 +108,7 @@ class GDR2Env(gym.Env):
 
         # ZeroMQ Setup
         self.ZMQ_PORT = 5555
-        self.ZMQ_IP = DYNAMICS_IP
+        self.ZMQ_IP = SIMULATION_IP # DYNAMICS_IP
         self.zmq_context = zmq.Context()
         self.socket = self.zmq_context.socket(zmq.REQ)
         self.socket.setsockopt(zmq.RCVTIMEO, 10 * 1000) # 1000 ms = 1 seconds

@@ -1,11 +1,17 @@
-import rclpy
-from rclpy.node import Node
-from std_msgs.msg import Float64
-from geometry_msgs.msg import Vector3Stamped 
 import zmq
 import threading
 import time
 import struct
+import rclpy
+from rclpy.node import Node
+
+from std_msgs.msg import Float64
+from geometry_msgs.msg import Vector3Stamped 
+
+import gz.transport13
+from gz.msgs10.world_control_pb2 import WorldControl
+from gz.msgs10.boolean_pb2 import Boolean as GzBoolean
+
 
 ZMQ_PORT = 5555
 
@@ -30,6 +36,9 @@ class ZMQBridge(Node):
         self.latest_state = None
         self.state_lock = threading.Lock() # Use a threading.Lock for safe access to self.latest_state
         self.state_event = threading.Event()
+
+        # GZ Transport Setup
+        self.gz_node = gz.transport13.Node()
         
         # Start thread to handle ZMQ requests
         self.zmq_thread = threading.Thread(target=self.zmq_listener, daemon=True)
@@ -65,6 +74,19 @@ class ZMQBridge(Node):
                         self.latest_state = None
                     action_msg = Float64(data=force)
                     self.action_publisher.publish(action_msg)
+
+                    # Call Gazebo service to step the simulation
+                    req = WorldControl()
+                    req.multi_step = 15 # default.sdf uses 250 Hz physics
+                    req.pause = True
+                    result, response = self.gz_node.request(
+                        "/world/default/control",
+                        req,
+                        WorldControl,
+                        GzBoolean,
+                        1000 # 1 second timeout
+                    )
+
                     # Wait for the new state to arrive from the /state topic
                     self.state_event.clear()
                     new_state_received = self.state_event.wait(timeout=2.0)

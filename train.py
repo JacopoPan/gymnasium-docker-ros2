@@ -31,7 +31,7 @@ def main():
             rnd_action = env.action_space.sample()
             print(f"\nTaking step {i} with action: {rnd_action}")
             obs, reward, terminated, truncated, info = env.step(rnd_action)
-            print(f"Step {i} result -- Obs: {obs}, Reward: {reward}, Terminated: {terminated}, Truncated: {truncated}, Info: {info}")
+            print(f"\nStep {i} result -- Obs: {obs}, Reward: {reward}, Terminated: {terminated}, Truncated: {truncated}, Info: {info}")
         print("\nInitial test steps complete. Closing environment.")
         env.close()
 
@@ -46,9 +46,10 @@ def main():
             if terminated or truncated:
                 obs, info = env.reset()
         total_time = time.time() - start_time 
-        print(f"Average Step Time: {(total_time / STEPS) * 1000:.3f} ms")
+        print(f"\nAverage Step Time: {(total_time / STEPS) * 1000:.3f} ms")
         print(f"Throughput: {(STEPS / total_time):.2f} steps/second")
-        print(f"Time for 1,000,000 steps: {(total_time * (1000000/STEPS)):.2f} seconds")
+        print(f"Time for 1,000,000 steps: {((total_time * (1000000/STEPS))/3600):.2f} hours")
+        print(f"Time to simulate 10 days at 50 Hz: {((10 * 24 * 60 * 60) * 50 * (total_time / STEPS) / 3600):.2f} hours")
         env.close()
 
     elif args.mode == "learn":
@@ -56,12 +57,12 @@ def main():
             # check_env(env) # Throws warning
             # check_env(env.unwrapped)
             sb3_check_env(env)
-            print("Environment passes all checks!")
+            print("\nEnvironment passes all checks!")
         except Exception as e:
-            print(f"Environment has issues: {e}")
+            print(f"\nEnvironment has issues: {e}")
 
         # Instantiate the agent
-        model = PPO("MlpPolicy", env, verbose=1)
+        model = PPO("MlpPolicy", env, verbose=1, device='cpu')
 
         # Train the agent
         print("Training agent...")
@@ -75,7 +76,7 @@ def main():
 
         # Load and test the trained agent
         del model # remove to demonstrate loading
-        model = PPO.load(model_path)
+        model = PPO.load(model_path, device='cpu')
 
         print("\nTesting trained agent...")
         obs, info = env.reset()
