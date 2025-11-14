@@ -124,9 +124,34 @@ class GDR2Env(gym.Env):
     def reset(self, seed=None, options=None):
         super().reset(seed=seed)  # Handle seeding
 
-        # Reset state to a random position near the center
-        self.position = self.np_random.uniform(low=-0.1, high=0.1)
-        self.velocity = 0.0
+        ###########################################################################################
+        # ZeroMQ REQ/REP to the ROS2 sim ##########################################################
+        ###########################################################################################
+        try:
+            reset = 9999.0
+            # Serialize the action and send the REQ
+            action_payload = f"{reset}".encode('utf-8')
+            self.socket.send(action_payload)    
+            # Wait for the REP (synchronous block) this call will block until a reply is received or it times out
+            reply_bytes = self.socket.recv()
+            # Deserialize
+            unpacked = struct.unpack('ffii', reply_bytes)
+            pos, vel, sec, nanosec = unpacked
+            # print(f"Received reset state: Pos={pos}, Vel={vel} at time {sec}.{nanosec}")
+            self.position = pos
+            self.velocity = vel
+        except zmq.error.Again:
+            print("ZMQ Error: Reply from container timed out.")
+        except ValueError:
+            print("ZMQ Error: Reply format error. Received garbage state.")
+        ###########################################################################################
+        # Reset state to a random position near the center ########################################
+        ###########################################################################################
+        # self.position = self.np_random.uniform(low=-0.1, high=0.1)
+        # self.velocity = 0.0
+        ###########################################################################################
+        ###########################################################################################
+        ###########################################################################################
         self.step_count = 0
         
         if self.render_mode == "human":
@@ -153,7 +178,7 @@ class GDR2Env(gym.Env):
             self.position = pos
             self.velocity = vel
         except zmq.error.Again:
-            print("ZMQ Error: Reply from container timed out. Resetting state.")
+            print("ZMQ Error: Reply from container timed out.")
         except ValueError:
             print("ZMQ Error: Reply format error. Received garbage state.")
         ###########################################################################################
@@ -170,7 +195,6 @@ class GDR2Env(gym.Env):
         ###########################################################################################
         ###########################################################################################
         ###########################################################################################
-
         self.step_count += 1
         
         # Calculate reward: Negative distance from the goal (position 0)

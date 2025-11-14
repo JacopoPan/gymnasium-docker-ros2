@@ -14,8 +14,7 @@ class DynamicsNode(Node):
         self.rate = rate
         self.dt = 1.0 / self.rate
 
-        # self.position = 0.0
-        self.position = np.random.uniform(low=-0.1, high=0.1)
+        self.position = 0.0
         self.velocity = 0.0
         self.control_input = 0.0
 
@@ -36,16 +35,20 @@ class DynamicsNode(Node):
         self.get_logger().debug(f"Received control_input: {self.control_input:.4f}")
 
     def update_state(self):
-        self.velocity += self.control_input * self.dt
-        self.velocity *= 0.99  # Add some damping        
-        self.position += self.velocity * self.dt
+        if self.control_input == 9999.0:
+            self.position = np.random.uniform(low=-0.1, high=0.1)
+            self.velocity = 0.0
+        else:
+            self.velocity += self.control_input * self.dt
+            self.velocity *= 0.99  # Add some damping        
+            self.position += self.velocity * self.dt
 
-        # Clip position to the bounds [-1.0, 1.0]
-        self.position = np.clip(self.position, -1.0, 1.0)
-        
-        # If it hits a wall, dampen the velocity (like a bounce)
-        if self.position == -1.0 or self.position == 1.0:
-            self.velocity *= -0.5
+            # Clip position to the bounds [-1.0, 1.0]
+            self.position = np.clip(self.position, -1.0, 1.0)
+            
+            # If it hits a wall, dampen the velocity (like a bounce)
+            if self.position == -1.0 or self.position == 1.0:
+                self.velocity *= -0.5
             
         # Publish the state
         state_msg = Vector3Stamped()
