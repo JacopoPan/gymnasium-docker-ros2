@@ -68,7 +68,7 @@ def main():
 
         # Train the agent
         print("Training agent...")
-        model.learn(total_timesteps=30000)
+        model.learn(total_timesteps=50000)
         print("Training complete.")
 
         # Save the agent

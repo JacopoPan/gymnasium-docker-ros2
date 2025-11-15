@@ -32,7 +32,7 @@ class DynamicsNode(Node):
 
     def control_input_callback(self, msg):
         self.control_input = msg.data
-        self.get_logger().debug(f"Received control_input: {self.control_input:.4f}")
+        # self.get_logger().info(f"Received control_input: {self.control_input:.4f}")
 
     def update_state(self):
         if self.control_input == 9999.0:
@@ -56,7 +56,7 @@ class DynamicsNode(Node):
         state_msg.vector.y = self.velocity
         state_msg.vector.z = 0.0  # Unused
         self.publisher.publish(state_msg)
-        self.get_logger().debug(f"Published state (Pos/Vel): {self.position:.4f}, {self.velocity:.4f} at time: {state_msg.header.stamp.sec}.{state_msg.header.stamp.nanosec}")
+        # self.get_logger().info(f"Published state (Pos/Vel): {self.position:.4f}, {self.velocity:.4f} at time: {state_msg.header.stamp.sec}.{state_msg.header.stamp.nanosec}")
 
 def main(args=None):
     parser = argparse.ArgumentParser(description='Dynamics Node')

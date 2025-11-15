@@ -9,12 +9,12 @@ windows:
   - debug:
       layout: even-horizontal
       panes:
-        - ros2 topic echo /clock
+        - # ros2 topic echo /clock
         <% if tmux_opts == 'simulation' %>
         - gz sim -v4 -s default.sdf
         - ros2 run ros_gz_bridge parameter_bridge /clock@rosgraph_msgs/msg/Clock[gz.msgs.Clock
         - python3 /gdr2/zeromq_bridge.py
         <% elsif tmux_opts == 'dynamics' %>
         - ros2 run dynamics dynamics --rate 1000 --ros-args -p use_sim_time:=True
-        - ros2 topic echo /control_input
+        - # ros2 topic echo /control_input
         <% end %>

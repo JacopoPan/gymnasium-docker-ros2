@@ -67,7 +67,7 @@ class ZMQBridge(Node):
                     # Receive the action (REQ)
                     action_bytes = self.socket.recv(zmq.NOBLOCK)
                     force = float(action_bytes.decode('utf-8'))
-                    self.get_logger().info(f"Received action: {force:.4f}")
+                    # self.get_logger().info(f"Received action: {force:.4f}")
 
                     # Clear old state and publish new action
                     with self.state_lock:
