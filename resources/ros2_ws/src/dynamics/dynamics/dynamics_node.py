@@ -18,6 +18,8 @@ class DynamicsNode(Node):
         self.velocity = 0.0
         self.control_input = 0.0
 
+        np.random.seed(42)
+
         self.publisher = self.create_publisher(Vector3Stamped, '/state', 10)
 
         self.subscriber = self.create_subscription(
@@ -35,9 +37,10 @@ class DynamicsNode(Node):
         # self.get_logger().info(f"Received control_input: {self.control_input:.4f}")
 
     def update_state(self):
-        if self.control_input == 9999.0:
+        if abs(self.control_input - 9999.0) < 0.1:
             self.position = np.random.uniform(low=-0.8, high=0.8)
             self.velocity = 0.0
+            # self.get_logger().info(f"Resetting state to Pos: {self.position:.4f}, Vel: {self.velocity:.4f}")
         else:
             self.velocity += self.control_input * self.dt
             self.velocity *= 0.99  # Add some damping        

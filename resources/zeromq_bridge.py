@@ -6,7 +6,7 @@ import rclpy
 from rclpy.node import Node
 
 from std_msgs.msg import Float64
-from geometry_msgs.msg import Vector3Stamped 
+from geometry_msgs.msg import Vector3Stamped
 
 import gz.transport13
 from gz.msgs10.world_control_pb2 import WorldControl
@@ -66,7 +66,7 @@ class ZMQBridge(Node):
                 try:
                     # Receive the action (REQ)
                     action_bytes = self.socket.recv(zmq.NOBLOCK)
-                    force = float(action_bytes.decode('utf-8'))
+                    force = struct.unpack('d', action_bytes)[0]
                     # self.get_logger().info(f"Received action: {force:.4f}")
 
                     # Clear old state and publish new action
@@ -93,7 +93,7 @@ class ZMQBridge(Node):
                     # Return the state (REP)
                     if new_state_received:
                         pos, vel, sec, nanosec = self.latest_state
-                        reply_payload = struct.pack('ffii', pos, vel, sec, nanosec)
+                        reply_payload = struct.pack('ddii', pos, vel, sec, nanosec)
                     else:
                         self.get_logger().warn("State timeout! Replying with 0 state.")
                         reply_payload = b"0.0,0.0,0,0" # Fail safe

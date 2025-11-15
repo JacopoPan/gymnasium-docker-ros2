@@ -35,4 +35,8 @@ docker exec -it dynamics-container tmux attach
 
 docker stop $(docker ps -q) && docker container prune -f
 
+TODO
+
+improve, test env.reset()
+
 >

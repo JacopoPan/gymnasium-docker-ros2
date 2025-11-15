@@ -30,8 +30,8 @@ class GDR2Env(gym.Env):
         self.obs_high = np.array([1.0, 5.0], dtype=np.float32)
         self.observation_space = gym.spaces.Box(low=self.obs_low, high=self.obs_high, dtype=np.float32)
 
-        # Action Space: [force] between -3.0 and 3.0
-        self.action_space = gym.spaces.Box(low=-3.0, high=3.0, shape=(1,), dtype=np.float32)
+        # Action Space: [force] between -1.0 and 1.0
+        self.action_space = gym.spaces.Box(low=-1.0, high=1.0, shape=(1,), dtype=np.float32)
 
         # Internal state
         self.position = 0.0
@@ -128,14 +128,14 @@ class GDR2Env(gym.Env):
         # ZeroMQ REQ/REP to the ROS2 sim ##########################################################
         ###########################################################################################
         try:
-            reset = 9999.0
+            reset = 9999.0 # Special action to reset state
             # Serialize the action and send the REQ
-            action_payload = f"{reset}".encode('utf-8')
+            action_payload = struct.pack('d', reset)
             self.socket.send(action_payload)    
             # Wait for the REP (synchronous block) this call will block until a reply is received or it times out
             reply_bytes = self.socket.recv()
             # Deserialize
-            unpacked = struct.unpack('ffii', reply_bytes)
+            unpacked = struct.unpack('ddii', reply_bytes)
             pos, vel, sec, nanosec = unpacked
             # print(f"Received reset state: Pos={pos}, Vel={vel} at time {sec}.{nanosec}")
             self.position = pos
@@ -160,19 +160,19 @@ class GDR2Env(gym.Env):
         return self._get_obs(), self._get_info()
 
     def step(self, action):
-        force = action[0]
+        force = 3.0 * action[0]
 
         ###########################################################################################
         # ZeroMQ REQ/REP to the ROS2 sim ##########################################################
         ###########################################################################################
         try:
             # Serialize the action and send the REQ
-            action_payload = f"{force}".encode('utf-8')
+            action_payload = struct.pack('d', force)
             self.socket.send(action_payload)    
             # Wait for the REP (synchronous block) this call will block until a reply is received or it times out
             reply_bytes = self.socket.recv()
             # Deserialize
-            unpacked = struct.unpack('ffii', reply_bytes)
+            unpacked = struct.unpack('ddii', reply_bytes)
             pos, vel, sec, nanosec = unpacked
             # print(f"Received state: Pos={pos}, Vel={vel} at time {sec}.{nanosec}")
             self.position = pos
