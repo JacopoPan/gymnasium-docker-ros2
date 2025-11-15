@@ -77,7 +77,7 @@ class ZMQBridge(Node):
 
                     # Call Gazebo service to step the simulation
                     req = WorldControl()
-                    req.multi_step = 13 # default.sdf uses 250 Hz physics
+                    req.multi_step = 50
                     req.pause = True
                     result, response = self.gz_node.request(
                         "/world/default/control",

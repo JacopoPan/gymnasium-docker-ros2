@@ -35,8 +35,4 @@ docker exec -it dynamics-container tmux attach
 
 docker stop $(docker ps -q) && docker container prune -f
 
-## TODOS
-
-ROS2 dynamics should be re-set by the gymnasium environment
-
 >

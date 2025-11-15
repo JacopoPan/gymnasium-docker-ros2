@@ -29,6 +29,8 @@ def main():
             if i % 1 == 0:
                 input("Press Enter to continue...")
             rnd_action = env.action_space.sample()
+            if i == 3:
+                rnd_action = [9999.0]  # Special action to reset state
             print(f"\nTaking step {i} with action: {rnd_action}")
             obs, reward, terminated, truncated, info = env.step(rnd_action)
             print(f"\nStep {i} result -- Obs: {obs}, Reward: {reward}, Terminated: {terminated}, Truncated: {truncated}, Info: {info}")
@@ -66,7 +68,7 @@ def main():
 
         # Train the agent
         print("Training agent...")
-        model.learn(total_timesteps=20000)
+        model.learn(total_timesteps=30000)
         print("Training complete.")
 
         # Save the agent

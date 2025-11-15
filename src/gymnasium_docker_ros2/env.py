@@ -30,8 +30,8 @@ class GDR2Env(gym.Env):
         self.obs_high = np.array([1.0, 5.0], dtype=np.float32)
         self.observation_space = gym.spaces.Box(low=self.obs_low, high=self.obs_high, dtype=np.float32)
 
-        # Action Space: [force] between -1.0 and 1.0
-        self.action_space = gym.spaces.Box(low=-1.0, high=1.0, shape=(1,), dtype=np.float32)
+        # Action Space: [force] between -3.0 and 3.0
+        self.action_space = gym.spaces.Box(low=-3.0, high=3.0, shape=(1,), dtype=np.float32)
 
         # Internal state
         self.position = 0.0
@@ -147,7 +147,7 @@ class GDR2Env(gym.Env):
         ###########################################################################################
         # Reset state to a random position near the center ########################################
         ###########################################################################################
-        # self.position = self.np_random.uniform(low=-0.1, high=0.1)
+        # self.position = self.np_random.uniform(low=-0.8, high=0.8)
         # self.velocity = 0.0
         ###########################################################################################
         ###########################################################################################

@@ -36,16 +36,14 @@ class DynamicsNode(Node):
 
     def update_state(self):
         if self.control_input == 9999.0:
-            self.position = np.random.uniform(low=-0.1, high=0.1)
+            self.position = np.random.uniform(low=-0.8, high=0.8)
             self.velocity = 0.0
         else:
             self.velocity += self.control_input * self.dt
             self.velocity *= 0.99  # Add some damping        
             self.position += self.velocity * self.dt
-
             # Clip position to the bounds [-1.0, 1.0]
             self.position = np.clip(self.position, -1.0, 1.0)
-            
             # If it hits a wall, dampen the velocity (like a bounce)
             if self.position == -1.0 or self.position == 1.0:
                 self.velocity *= -0.5
