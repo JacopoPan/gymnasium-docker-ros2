@@ -13,7 +13,7 @@ cd gymnasium-docker-ros2/
 docker build -t gdr2-image -f resources/Dockerfile .
 
 # Install Anaconda: https://docs.conda.io/projects/conda/en/stable/user-guide/install/linux.html
-conda create -n gdr2 python=3.13 # https://devguide.python.org/versions/
+conda create -n gdr2 python=3.13
 conda activate gdr2
 
 pip3 install --upgrade pip
