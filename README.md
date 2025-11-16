@@ -33,10 +33,6 @@ docker run -it --rm --env TMUX_OPTS=dynamics gdr2-image
 docker exec -it simulation-container tmux attach
 docker exec -it dynamics-container tmux attach
 
-docker stop $(docker ps -q) && docker container prune -f
-
-TODO
-
-improve, test env.reset()
+docker stop $(docker ps -q) && docker container prune -f && docker network prune -f
 
 >

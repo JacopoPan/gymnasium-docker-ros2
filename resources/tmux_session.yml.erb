@@ -15,6 +15,6 @@ windows:
         - ros2 run ros_gz_bridge parameter_bridge /clock@rosgraph_msgs/msg/Clock[gz.msgs.Clock
         - python3 /gdr2/zeromq_bridge.py
         <% elsif tmux_opts == 'dynamics' %>
-        - ros2 run dynamics dynamics --rate 1000 --ros-args -p use_sim_time:=True
+        - ros2 run dynamics dynamics --rate 20 --ros-args -p use_sim_time:=True
         - # ros2 topic echo /control_input
         <% end %>

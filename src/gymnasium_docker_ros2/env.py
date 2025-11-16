@@ -160,7 +160,7 @@ class GDR2Env(gym.Env):
         return self._get_obs(), self._get_info()
 
     def step(self, action):
-        force = 3.0 * action[0]
+        force = action[0]
 
         ###########################################################################################
         # ZeroMQ REQ/REP to the ROS2 sim ##########################################################

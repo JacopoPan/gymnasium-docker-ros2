@@ -95,8 +95,8 @@ class ZMQBridge(Node):
                         pos, vel, sec, nanosec = self.latest_state
                         reply_payload = struct.pack('ddii', pos, vel, sec, nanosec)
                     else:
-                        self.get_logger().warn("State timeout! Replying with 0 state.")
-                        reply_payload = b"0.0,0.0,0,0" # Fail safe
+                        self.get_logger().warn("State timeout!")
+                        # reply_payload = b"0.0,0.0,0,0" # Fail safe
                     
                     self.socket.send(reply_payload)
 

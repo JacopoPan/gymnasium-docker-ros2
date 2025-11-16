@@ -24,21 +24,25 @@ def main():
 
     if args.mode == "step":
         obs, info = env.reset()
-        print(f"Reset result -- Obs: {obs}, Info: {info}")
-        for i in range(5):
+        print(f"Reset result -- Obs: {obs}")
+        for i in range(8):
             if i % 1 == 0:
                 input("Press Enter to continue...")
             rnd_action = env.action_space.sample()
             if i == 3:
-                rnd_action = [9999.0/3]  # Reset action
+                rnd_action = [9999.0]  # Reset action
+            if i == 6:
+                obs, info = env.reset()
+                print(f"\nReset result -- Obs: {obs}")
+                input("Press Enter to continue...")
             print(f"\nTaking step {i} with action: {rnd_action}")
             obs, reward, terminated, truncated, info = env.step(rnd_action)
-            print(f"\nStep {i} result -- Obs: {obs}, Reward: {reward}, Terminated: {terminated}, Truncated: {truncated}, Info: {info}")
+            print(f"\nStep {i} result -- Obs: {obs}, Reward: {reward}, Terminated: {terminated}, Truncated: {truncated}")
         print("\nInitial test steps complete. Closing environment.")
         env.close()
 
     elif args.mode == "speed":
-        STEPS = 10000
+        STEPS = 1000
         print(f"Starting Speed Test ({STEPS} steps)")    
         obs, info = env.reset()
         start_time = time.time()        
@@ -62,6 +66,10 @@ def main():
             print("\nEnvironment passes all checks!")
         except Exception as e:
             print(f"\nEnvironment has issues: {e}")
+
+        env.reset()
+        env.step(env.action_space.sample())
+        env.reset()
 
         # Instantiate the agent
         model = PPO("MlpPolicy", env, verbose=1, device='cpu')
