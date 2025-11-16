@@ -1,6 +1,6 @@
 # gymnasium-docker-ros2
 
-GDR2 shows how to wrap a multi-container Docker/ROS2 app into [`gymnasium`](https://github.com/Farama-Foundation/Gymnasium) and train [`stable-baselines3`](https://github.com/DLR-RM/stable-baselines3) PPO agent using [`pyzmq`](https://github.com/zeromq/pyzmq) for communication and `gz service` to synchronously step Gazebo
+GDR2 shows how to wrap a multi-container Docker/Gazebo/ROS2 app into [`gymnasium`](https://github.com/Farama-Foundation/Gymnasium) and train [`stable-baselines3`](https://github.com/DLR-RM/stable-baselines3)'s PPO, using [`pyzmq`](https://github.com/zeromq/pyzmq) for communication and `gz service` to synchronously step the `/clock`
 
 > [!IMPORTANT]
 > This repo is developed using Ubuntu 22.04 with `nvidia-driver-580` on an i9-13 with RTX 3500
