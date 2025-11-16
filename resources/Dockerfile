@@ -90,6 +90,7 @@ RUN echo "source /gdr2/ros2_ws/install/setup.bash" >> /root/.bashrc
 
 # Copy resources
 COPY resources/zeromq_bridge.py /gdr2/zeromq_bridge.py
+COPY resources/gdr2-world.sdf /gdr2/gdr2-world.sdf
 COPY resources/tmux_session.yml.erb /gdr2/tmux_session.yml.erb
 
 # Final config

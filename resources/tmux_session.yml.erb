@@ -11,7 +11,7 @@ windows:
       panes:
         - # ros2 topic echo /clock
         <% if tmux_opts == 'simulation' %>
-        - gz sim -v4 -s default.sdf
+        - gz sim -v4 -s /gdr2/gdr2-world.sdf
         - ros2 run ros_gz_bridge parameter_bridge /clock@rosgraph_msgs/msg/Clock[gz.msgs.Clock
         - python3 /gdr2/zeromq_bridge.py
         <% elsif tmux_opts == 'dynamics' %>

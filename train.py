@@ -26,23 +26,20 @@ def main():
         obs, info = env.reset()
         print(f"Reset result -- Obs: {obs}")
         for i in range(8):
-            if i % 1 == 0:
-                input("Press Enter to continue...")
-            rnd_action = env.action_space.sample()
-            if i == 3:
-                rnd_action = [9999.0]  # Reset action
-            if i == 6:
+            user_input = input("Press Enter to step, 'r' then Enter to reset...")
+            stripped_input = user_input.strip().lower()
+            if stripped_input and stripped_input in ('r', 'reset'):
                 obs, info = env.reset()
                 print(f"\nReset result -- Obs: {obs}")
-                input("Press Enter to continue...")
-            print(f"\nTaking step {i} with action: {rnd_action}")
-            obs, reward, terminated, truncated, info = env.step(rnd_action)
-            print(f"\nStep {i} result -- Obs: {obs}, Reward: {reward}, Terminated: {terminated}, Truncated: {truncated}")
+            else:
+                rnd_action = env.action_space.sample()
+                obs, reward, terminated, truncated, info = env.step(rnd_action)
+                print(f"\nStep {i} -- action: {rnd_action} result -- Obs: {obs}, Reward: {reward}, Terminated: {terminated}, Truncated: {truncated}")
         print("\nInitial test steps complete. Closing environment.")
         env.close()
 
     elif args.mode == "speed":
-        STEPS = 1000
+        STEPS = 10000
         print(f"Starting Speed Test ({STEPS} steps)")    
         obs, info = env.reset()
         start_time = time.time()        
@@ -76,7 +73,7 @@ def main():
 
         # Train the agent
         print("Training agent...")
-        model.learn(total_timesteps=100000)
+        model.learn(total_timesteps=40000)
         print("Training complete.")
 
         # Save the agent
