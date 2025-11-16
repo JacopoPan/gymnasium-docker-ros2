@@ -19,9 +19,9 @@ conda activate gdr2
 pip3 install --upgrade pip
 pip3 install -e .
 
-python3 train.py --mode step # Manually step the simulation
-python3 train.py --mode speed # Check the simulation throughput
-python3 train.py --mode learn # Train and test a PPO agent
+python3 test.py --mode step # Manually step the simulation
+python3 test.py --mode speed # Check the simulation throughput
+python3 test.py --mode learn # Train and test a PPO agent
 ```
 
 <!--

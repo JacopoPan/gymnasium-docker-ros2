@@ -12,7 +12,7 @@ from gymnasium_docker_ros2.env import GDR2Env
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--mode", type=str, default="train", choices=["step", "speed", "learn"])
+    parser.add_argument("--mode", type=str, default="learn", choices=["step", "speed", "learn"])
     args = parser.parse_args()
 
     # Register the environment so we can create it with gym.make()
@@ -25,7 +25,7 @@ def main():
     if args.mode == "step":
         obs, info = env.reset()
         print(f"Reset result -- Obs: {obs}")
-        for i in range(8):
+        for i in range(10):
             user_input = input("Press Enter to step, 'r' then Enter to reset...")
             stripped_input = user_input.strip().lower()
             if stripped_input and stripped_input in ('r', 'reset'):
