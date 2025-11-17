@@ -19,9 +19,9 @@ conda activate gdr2
 pip3 install --upgrade pip
 pip3 install -e .
 
-python3 test.py --mode step # Manually step the simulation
-python3 test.py --mode speed # Check the simulation throughput
-python3 test.py --mode learn # Train and test a PPO agent
+python3 test.py --mode step       # Manually step the simulation
+python3 test.py --mode speed      # Check the simulation throughput
+python3 test.py --mode learn      # Train and test a PPO agent
 ```
 
 <!--
@@ -35,4 +35,4 @@ docker exec -it dynamics-container tmux attach
 
 docker stop $(docker ps -q) && docker container prune -f && docker network prune -f
 
->
+-->

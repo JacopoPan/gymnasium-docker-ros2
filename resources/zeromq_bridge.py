@@ -77,7 +77,7 @@ class ZMQBridge(Node):
 
                     # Call Gazebo service to step the simulation
                     req = WorldControl()
-                    req.multi_step = 50 # 50ms (see gdr2-world.sdf) = 20Hz (see dynamics_node.py)
+                    req.multi_step = 1 # 50ms (see gdr2-world.sdf) = 20Hz (see dynamics_node.py)
                     req.pause = True
                     result, response = self.gz_node.request(
                         "/world/gdr2-world/control",
