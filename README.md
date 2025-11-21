@@ -1,6 +1,6 @@
 # gymnasium-docker-ros2
 
-GDR2 shows how to wrap a multi-container Docker/Gazebo/ROS2 app into [`gymnasium`](https://github.com/Farama-Foundation/Gymnasium) and train [`stable-baselines3`](https://github.com/DLR-RM/stable-baselines3)'s PPO, using [`pyzmq`](https://github.com/zeromq/pyzmq) for communication and `gz service` to synchronously step the `/clock`
+GDR2 shows how to wrap a multi-container Docker/Gazebo/ROS2 app into [`gymnasium`](https://github.com/Farama-Foundation/Gymnasium) and train [`stable-baselines3`](https://github.com/DLR-RM/stable-baselines3)'s PPO, using [`ZeroMQ`](https://github.com/zeromq/) for communication and `gz service` to synchronously step the `/clock`
 
 > [!IMPORTANT]
 > This repo is developed using Ubuntu 22.04 with `nvidia-driver-580` on an i9-13 with RTX 3500
@@ -27,6 +27,7 @@ python3 test.py --mode learn      # Train and test a PPO agent
 <!--
 
 Test containers with:
+docker run -it --rm --entrypoint /bin/bash gdr2-image
 docker run -it --rm --env TMUX_OPTS=simulation gdr2-image
 docker run -it --rm --env TMUX_OPTS=dynamics gdr2-image
 

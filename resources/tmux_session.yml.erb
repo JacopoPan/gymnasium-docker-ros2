@@ -13,7 +13,7 @@ windows:
         <% if tmux_opts == 'simulation' %>
         - gz sim -v4 -s /gdr2/gdr2-world.sdf
         - ros2 run ros_gz_bridge parameter_bridge /clock@rosgraph_msgs/msg/Clock[gz.msgs.Clock
-        - python3 /gdr2/zeromq_bridge.py
+        - ros2 run zmq_bridge_cpp zmq_bridge_node # cpp bridge is 30% faster than python3 /gdr2/zeromq_bridge.py
         <% elsif tmux_opts == 'dynamics' %>
         - ros2 run dynamics dynamics --rate 20 --ros-args -p use_sim_time:=True
         - # ros2 topic echo /control_input

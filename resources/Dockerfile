@@ -61,6 +61,7 @@ RUN apt update \
     && apt install -y --no-install-recommends \
         gz-harmonic ros-humble-ros-gzharmonic \
         libgz-transport13-* python3-gz-transport13 python3-gz-msgs10 \
+        libgz-msgs10-dev \
     && apt clean \
     && rm -rf /var/lib/apt/lists/*
 # Run with $ gz sim
